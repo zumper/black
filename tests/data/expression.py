@@ -245,8 +245,6 @@ last_call()
 
 
 # output
-
-
 ...
 "some_string"
 b"\\xa3"
@@ -434,20 +432,15 @@ d = (1,) + a + (2,)
 e = (1,).count(1)
 f = 1, *range(10)
 g = 1, *"ten"
-what_is_up_with_those_new_coord_names = (coord_names + set(vars_to_create)) + set(
-    vars_to_remove
+what_is_up_with_those_new_coord_names = (
+    (coord_names + set(vars_to_create)) + set(vars_to_remove)
 )
-what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - set(
-    vars_to_remove
+what_is_up_with_those_new_coord_names = (
+    (coord_names | set(vars_to_create)) - set(vars_to_remove)
 )
-result = (
-    session.query(models.Customer.id)
-    .filter(
-        models.Customer.account_id == account_id, models.Customer.email == email_address
-    )
-    .order_by(models.Customer.id.asc())
-    .all()
-)
+result = session.query(models.Customer.id).filter(
+    models.Customer.account_id == account_id, models.Customer.email == email_address
+).order_by(models.Customer.id.asc()).all()
 Ø = set()
 authors.łukasz.say_thanks()
 mapping = {
@@ -473,8 +466,8 @@ print(*[] or [1])
 print(**{1: 3} if False else {x: x for x in range(3)})
 print(*lambda x: x)
 assert not Test, "Short message"
-assert this is ComplexTest and not requirements.fit_in_a_single_line(
-    force=False
+assert (
+    this is ComplexTest and not requirements.fit_in_a_single_line(force=False)
 ), "Short message"
 assert parens is TooMany
 for (x,) in (1,), (2,), (3,):

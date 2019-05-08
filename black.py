@@ -472,12 +472,16 @@ def reformat_one(
                 res_src = src.resolve()
                 if res_src in cache and cache[res_src] == get_cache_info(res_src):
                     changed = Changed.CACHED
-            if changed is not Changed.CACHED and format_file_in_place(
-                src, fast=fast, write_back=write_back, mode=mode
+            if (
+                changed is not Changed.CACHED
+                and format_file_in_place(
+                    src, fast=fast, write_back=write_back, mode=mode
+                )
             ):
                 changed = Changed.YES
-            if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
-                write_back is WriteBack.CHECK and changed is Changed.NO
+            if (
+                (write_back is WriteBack.YES and changed is not Changed.CACHED)
+                or (write_back is WriteBack.CHECK and changed is Changed.NO)
             ):
                 write_cache(cache, [src], mode)
         report.done(src, changed)
@@ -575,8 +579,9 @@ async def schedule_formatting(
                 changed = Changed.YES if task.result() else Changed.NO
                 # If the file was written back or was successfully checked as
                 # well-formatted, store this information in the cache.
-                if write_back is WriteBack.YES or (
-                    write_back is WriteBack.CHECK and changed is Changed.NO
+                if (
+                    write_back is WriteBack.YES
+                    or (write_back is WriteBack.CHECK and changed is Changed.NO)
                 ):
                     sources_to_cache.append(src)
                 report.done(src, changed)
@@ -1187,9 +1192,10 @@ class Line:
     @property
     def is_stub_class(self) -> bool:
         """Is this line a class definition with a body consisting only of "..."?"""
-        return self.is_class and self.leaves[-3:] == [
-            Leaf(token.DOT, ".") for _ in range(3)
-        ]
+        return (
+            self.is_class
+            and self.leaves[-3:] == [Leaf(token.DOT, ".") for _ in range(3)]
+        )
 
     @property
     def is_def(self) -> bool:
@@ -1203,11 +1209,14 @@ class Line:
             second_leaf: Optional[Leaf] = self.leaves[1]
         except IndexError:
             second_leaf = None
-        return (first_leaf.type == token.NAME and first_leaf.value == "def") or (
-            first_leaf.type == token.ASYNC
-            and second_leaf is not None
-            and second_leaf.type == token.NAME
-            and second_leaf.value == "def"
+        return (
+            (first_leaf.type == token.NAME and first_leaf.value == "def")
+            or (
+                first_leaf.type == token.ASYNC
+                and second_leaf is not None
+                and second_leaf.type == token.NAME
+                and second_leaf.value == "def"
+            )
         )
 
     @property
@@ -1374,8 +1383,9 @@ class Line:
 
             if subscript_start.type == syms.subscriptlist:
                 subscript_start = child_towards(subscript_start, leaf)
-        return subscript_start is not None and any(
-            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
+        return (
+            subscript_start is not None
+            and any(n.type in TEST_DESCENDANTS for n in subscript_start.pre_order())
         )
 
     def __str__(self) -> str:
@@ -1476,8 +1486,9 @@ class EmptyLineTracker:
         if self.previous_line.is_decorator:
             return 0, 0
 
-        if self.previous_line.depth < current_line.depth and (
-            self.previous_line.is_class or self.previous_line.is_def
+        if (
+            self.previous_line.depth < current_line.depth
+            and (self.previous_line.is_class or self.previous_line.is_def)
         ):
             return 0, 0
 
@@ -1719,11 +1730,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         return DOUBLESPACE
 
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
-    if t == token.COLON and p.type not in {
-        syms.subscript,
-        syms.subscriptlist,
-        syms.sliceop,
-    }:
+    if (
+        t == token.COLON
+        and p.type not in {syms.subscript, syms.subscriptlist, syms.sliceop}
+    ):
         return NO
 
     prev = leaf.prev_sibling
@@ -1743,12 +1753,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
 
         if prevp.type == token.EQUAL:
             if prevp.parent:
-                if prevp.parent.type in {
-                    syms.arglist,
-                    syms.argument,
-                    syms.parameters,
-                    syms.varargslist,
-                }:
+                if (
+                    prevp.parent.type
+                    in {syms.arglist, syms.argument, syms.parameters, syms.varargslist}
+                ):
                     return NO
 
                 elif prevp.parent.type == syms.typedargslist:
@@ -1900,10 +1908,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
 
             prevp_parent = prevp.parent
             assert prevp_parent is not None
-            if prevp.type == token.COLON and prevp_parent.type in {
-                syms.subscript,
-                syms.sliceop,
-            }:
+            if (
+                prevp.type == token.COLON
+                and prevp_parent.type in {syms.subscript, syms.sliceop}
+            ):
                 return NO
 
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
@@ -3633,78 +3641,9 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
         return True
 
     max_priority = bt.max_delimiter_priority()
-    if bt.delimiter_count_with_priority(max_priority) > 1:
-        # With more than one delimiter of a kind the optional parentheses read better.
-        return False
-
     if max_priority == DOT_PRIORITY:
         # A single stranded method call doesn't require optional parentheses.
         return True
-
-    assert len(line.leaves) >= 2, "Stranded delimiter"
-
-    first = line.leaves[0]
-    second = line.leaves[1]
-    penultimate = line.leaves[-2]
-    last = line.leaves[-1]
-
-    # With a single delimiter, omit if the expression starts or ends with
-    # a bracket.
-    if first.type in OPENING_BRACKETS and second.type not in CLOSING_BRACKETS:
-        remainder = False
-        length = 4 * line.depth
-        for _index, leaf, leaf_length in enumerate_with_length(line):
-            if leaf.type in CLOSING_BRACKETS and leaf.opening_bracket is first:
-                remainder = True
-            if remainder:
-                length += leaf_length
-                if length > line_length:
-                    break
-
-                if leaf.type in OPENING_BRACKETS:
-                    # There are brackets we can further split on.
-                    remainder = False
-
-        else:
-            # checked the entire string and line length wasn't exceeded
-            if len(line.leaves) == _index + 1:
-                return True
-
-        # Note: we are not returning False here because a line might have *both*
-        # a leading opening bracket and a trailing closing bracket.  If the
-        # opening bracket doesn't match our rule, maybe the closing will.
-
-    if (
-        last.type == token.RPAR
-        or last.type == token.RBRACE
-        or (
-            # don't use indexing for omitting optional parentheses;
-            # it looks weird
-            last.type == token.RSQB
-            and last.parent
-            and last.parent.type != syms.trailer
-        )
-    ):
-        if penultimate.type in OPENING_BRACKETS:
-            # Empty brackets don't help.
-            return False
-
-        if is_multiline_string(first):
-            # Additional wrapping of a multiline string in this situation is
-            # unnecessary.
-            return True
-
-        length = 4 * line.depth
-        seen_other_brackets = False
-        for _index, leaf, leaf_length in enumerate_with_length(line):
-            length += leaf_length
-            if leaf is last.opening_bracket:
-                if seen_other_brackets or length <= line_length:
-                    return True
-
-            elif leaf.type in OPENING_BRACKETS:
-                # There are brackets we can further split on.
-                seen_other_brackets = True
 
     return False
 

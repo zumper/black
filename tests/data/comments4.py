@@ -84,13 +84,9 @@ def foo(list_a, list_b):
 
 def foo2(list_a, list_b):
     # Standalone comment reasonably placed.
-    return (
-        User.query.filter(User.foo == "bar")
-        .filter(
-            db.or_(User.field_a.astext.in_(list_a), User.field_b.astext.in_(list_b))
-        )
-        .filter(User.xyz.is_(None))
-    )
+    return User.query.filter(User.foo == "bar").filter(
+        db.or_(User.field_a.astext.in_(list_a), User.field_b.astext.in_(list_b))
+    ).filter(User.xyz.is_(None))
 
 
 def foo3(list_a, list_b):
