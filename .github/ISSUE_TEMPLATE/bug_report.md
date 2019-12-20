@@ -28,8 +28,8 @@ assignees: ""
 2. Or run _Black_ on your machine:
    - create a new virtualenv (make sure it's the same Python version);
    - clone this repository;
-   - run `pip install -e .`;
-   - make sure it's sane by running `python setup.py test`; and
+   - run `poetry install`;
+   - make sure it's sane by running `pytest`; and
    - run `black` like you did last time.
 
 **Additional context** Add any other context about the problem here.
