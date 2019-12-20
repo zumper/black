@@ -33,9 +33,14 @@ exclude = '''
 # Build system information below.
 # NOTE: You don't need this in your own Black configuration.
 
-[build-system]
-requires = ["setuptools>=41.0", "setuptools-scm", "wheel"]
-build-backend = "setuptools.build_meta"
+[tool.poetry-dynamic-versioning]
+enable = true
+pattern = "(?P<base>\\d\\d\\.\\d\\d?)(?P<stage>[a-zA-Z])(?P<revision>\\d+)"
+dirty = true
+
+[tool.poetry-dynamic-versioning.substitution]
+files = ["*/_black_version.py"]
+patterns = ["(^version\\s*=\\s*\")[^\"]*\"$"]
 
 [tool.poetry]
 name = "black"
@@ -43,20 +48,55 @@ version = "19.12b0"
 description = "The uncompromising code formatter."
 license = "MIT"
 authors = ["Łukasz Langa <lukasz@langa.pl>"]
+maintainers = [
+  "Carl Meyer <carl@oddbird.net>",
+  "Carol Willing <carolcode@willingconsulting.com>",
+  "Jelle Ziljstra <jelle.zijlstra@gmail.com>",
+  "Mika Naylor <mail@autophagy.io>",
+  "Zsolt Dollenstein <zsol.zsol@gmail.com>",
+]
 readme = "README.md"
 homepage = "https://github.com/psf/black"
 documentation = "https://black.readthedocs.io"
 classifiers=[
-        "Development Status :: 4 - Beta",
-        "Environment :: Console",
-        "Intended Audience :: Developers",
-        "Operating System :: OS Independent",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Topic :: Software Development :: Quality Assurance",
-    ]
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Software Development :: Quality Assurance",
+]
+keywords = [
+  "automation",
+  "formatter",
+  "yapf",
+  "autopep8",
+  "pyfmt",
+  "gofmt",
+  "rustfmt",
+]
+packages = [
+  {include = "black.py"},
+  {include = "blackd.py"},
+  {include = "blib2to3"},
+  {include = "tests", format="sdist"},
+  {include = "profiling", format="sdist"},
+  {include = "plugin", format="sdist"},
+  {include = "docs", format="sdist"},
+  {include = ".flake8", format="sdist"},
+  {include = "mypy.ini", format="sdist"},
+  {include = "poetry.lock", format="sdist"},
+  {include = ".pre-commit-config.yaml", format="sdist"},
+  {include = ".pre-commit-hooks.yaml", format="sdist"},
+  {include = "CONTRIBUTING.md", format="sdist"},
+]
+include = [
+  "_black_version.py"
+]
 
 [tool.poetry.scripts]
 black = "black:patched_main"
+blackd = "black:patched_main [d]"
 
 [tool.poetry.extras]
 d = ["aiohttp", "aiohttp-cors"]
@@ -92,3 +132,7 @@ setuptools = ">=39.2.0"
 twine = ">=1.11.0"
 wheel = ">=0.31.1"
 setuptools-scm = "*"
+
+[build-system]
+requires = ["poetry>=1.0", "poetry-dynamic-versioning>=0.4"]
+build-backend = "poetry.masonry.api"
