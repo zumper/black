@@ -25,13 +25,13 @@ You can use any operating system. I am using macOS myself and CentOS at work.
 Install all development dependencies using:
 
 ```
-$ pipenv install --dev
-$ pipenv shell
+$ poetry install --extras d
+$ poetry shell
 $ pre-commit install
 ```
 
-If you haven't used `pipenv` before but are comfortable with virtualenvs, just run
-`pip install pipenv` in the virtualenv you're already using and invoke the command above
+If you haven't used `poetry` before but are comfortable with virtualenvs, just run
+`pip install poetry` in the virtualenv you're already using and invoke the commands above
 from the cloned _Black_ repo. It will do the correct thing.
 
 Before submitting pull requests, run tests with:
