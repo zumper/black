@@ -44,7 +44,7 @@ patterns = ["(^version\\s*=\\s*\")[^\"]*\"$"]
 
 [tool.poetry]
 name = "black"
-version = "19.12b0"
+version = "19.10b0"
 description = "The uncompromising code formatter."
 license = "MIT"
 authors = ["Łukasz Langa <lukasz@langa.pl>"]
