@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Get Poetry cache
         id: poetry-cache
         run: |
@@ -31,7 +31,9 @@ jobs:
         id: cache
         with:
           path: ${{ steps.poetry-cache.outputs.dir }}
-          key: poetry-${{ hashFiles('**/poetry.lock') }}-${{ runner.os }}-${{ matrix.python-version }}
+          key:
+            poetry-${{ hashFiles('**/poetry.lock') }}-${{ runner.os }}-${{
+            matrix.python-version }}
           restore-keys: |
             poetry-${{ hashFiles('**/poetry.lock') }}-${{ runner.os }}-${{ matrix.python-version }}
 
