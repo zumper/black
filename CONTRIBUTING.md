@@ -31,8 +31,8 @@ $ pre-commit install
 ```
 
 If you haven't used `poetry` before but are comfortable with virtualenvs, just run
-`pip install poetry` in the virtualenv you're already using and invoke the commands above
-from the cloned _Black_ repo. It will do the correct thing.
+`pip install poetry` in the virtualenv you're already using and invoke the commands
+above from the cloned _Black_ repo. It will do the correct thing.
 
 Before submitting pull requests, run tests with:
 
