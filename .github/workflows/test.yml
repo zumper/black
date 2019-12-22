@@ -18,10 +18,25 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
+      
+      - name: Get Poetry cache
+        id: poetry-cache
+        run: |
+          python -m pip install --upgrade pip poetry
+          python -c "print('::set-output name=dir::', end='')"
+          poetry config cache-dir
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v1
+        id: cache
+        with:
+          path: ${{ steps.poetry-cache.outputs.dir }}
+          key: poetry-${{ hashFiles('**/poetry.lock') }}-${{ runner.os }}-${{ matrix.python-version }}
+          restore-keys: |
+            poetry-${{ hashFiles('**/poetry.lock') }}-${{ runner.os }}-${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip poetry
           poetry install -E d
 
       - name: Unit tests
