@@ -4,10 +4,10 @@ cache:
   directories:
     - $HOME/.cache/pre-commit
 env:
-  - TEST_CMD="coverage run tests/test_black.py"
+  - TEST_CMD="poetry run pytest --cov=."
 install:
-  - pip install coverage coveralls pre-commit
-  - pip install -e '.[d]'
+  - pip install poetry
+  - poetry install -E d
 script:
   - $TEST_CMD
 after_success:
@@ -20,7 +20,7 @@ matrix:
     - name: "lint"
       python: 3.7
       env:
-        - TEST_CMD="pre-commit run --all-files"
+        - TEST_CMD="poetry run pre-commit run --all-files"
     - name: "3.6"
       python: 3.6
     - name: "3.7"
