@@ -93,6 +93,8 @@ packages = [
 include = [
   "_black_version.py"
 ]
+# Uncomment this to build with mypyc
+# build = "build.py"
 
 [tool.poetry.scripts]
 black = "black:patched_main"
