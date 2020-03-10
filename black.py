@@ -77,7 +77,7 @@ Timestamp = float
 FileSize = int
 CacheInfo = Tuple[Timestamp, FileSize]
 Cache = Dict[Path, CacheInfo]
-out = partial(click.secho, bold=True, err=True)
+out = partial(click.secho, bold=True, err=False)
 err = partial(click.secho, fg="red", err=True)
 
 pygram.initialize(CACHE_DIR)
@@ -494,7 +494,7 @@ def main(
 
     if verbose or not quiet:
         out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
-        click.secho(str(report), err=True)
+        click.secho(str(report), err=bool(report.return_code))
     ctx.exit(report.return_code)
 
 
@@ -936,21 +936,21 @@ class DebugVisitor(Visitor[T]):
         indent = " " * (2 * self.tree_depth)
         if isinstance(node, Node):
             _type = type_repr(node.type)
-            out(f"{indent}{_type}", fg="yellow")
+            err(f"{indent}{_type}", fg="yellow")
             self.tree_depth += 1
             for child in node.children:
                 yield from self.visit(child)
 
             self.tree_depth -= 1
-            out(f"{indent}/{_type}", fg="yellow", bold=False)
+            err(f"{indent}/{_type}", fg="yellow")
         else:
             _type = token.tok_name.get(node.type, str(node.type))
-            out(f"{indent}{_type}", fg="blue", nl=False)
+            err(f"{indent}{_type}", fg="blue", nl=False)
             if node.prefix:
                 # We don't have to handle prefixes for `Node` objects since
                 # that delegates to the first child anyway.
-                out(f" {node.prefix!r}", fg="green", bold=False, nl=False)
-            out(f" {node.value!r}", fg="blue", bold=False)
+                err(f" {node.prefix!r}", fg="green", nl=False)
+            err(f" {node.value!r}", fg="blue")
 
     @classmethod
     def show(cls, code: Union[str, Leaf, Node]) -> None:
