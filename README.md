@@ -31,11 +31,11 @@ Try it out now using the [Black Playground](https://black.now.sh). Watch the
 ---
 
 _Contents:_ **[Installation and usage](#installation-and-usage)** |
-**[Code style](#the-black-code-style)** | **[pyproject.toml](#pyprojecttoml)** |
-**[Editor integration](#editor-integration)** | **[blackd](#blackd)** |
-**[Version control integration](#version-control-integration)** |
-**[Ignoring unmodified files](#ignoring-unmodified-files)** | **[Used by](#used-by)** |
-**[Testimonials](#testimonials)** | **[Show your style](#show-your-style)** |
+**[Code style](#the-black-code-style)** | **[Pragmatism](#pragmatism)** |
+**[pyproject.toml](#pyprojecttoml)** | **[Editor integration](#editor-integration)** |
+**[blackd](#blackd)** | **[Version control integration](#version-control-integration)**
+| **[Ignoring unmodified files](#ignoring-unmodified-files)** | **[Used by](#used-by)**
+| **[Testimonials](#testimonials)** | **[Show your style](#show-your-style)** |
 **[Contributing](#contributing-to-black)** | **[Change Log](#change-log)** |
 **[Authors](#authors)**
 
@@ -61,36 +61,41 @@ black {source_file_or_directory}
 _Black_ doesn't provide many options. You can list them by running `black --help`:
 
 ```text
-black [OPTIONS] [SRC]...
+Usage: black [OPTIONS] [SRC]...
+
+  The uncompromising code formatter.
 
 Options:
   -c, --code TEXT                 Format the code passed in as a string.
   -l, --line-length INTEGER       How many characters per line to allow.
                                   [default: 88]
+
   -t, --target-version [py27|py33|py34|py35|py36|py37|py38]
                                   Python versions that should be supported by
                                   Black's output. [default: per-file auto-
                                   detection]
-  --py36                          Allow using Python 3.6-only syntax on all
-                                  input files.  This will put trailing commas
-                                  in function signatures and calls also after
-                                  *args and **kwargs. Deprecated; use
-                                  --target-version instead. [default: per-file
-                                  auto-detection]
+
   --pyi                           Format all input files like typing stubs
                                   regardless of file extension (useful when
                                   piping source on standard input).
+
   -S, --skip-string-normalization
                                   Don't normalize string quotes or prefixes.
   --check                         Don't write the files back, just return the
                                   status.  Return code 0 means nothing would
                                   change.  Return code 1 means some files
-                                  would be reformatted.  Return code 123 means
+                                  would be reformatted. Return code 123 means
                                   there was an internal error.
+
   --diff                          Don't write the files back, just output a
                                   diff for each file on stdout.
+
+  --color / --no-color            Show colored diff. Only applies when
+                                  `--diff` is given.
+
   --fast / --safe                 If --fast given, skip temporary sanity
                                   checks. [default: --safe]
+
   --include TEXT                  A regular expression that matches files and
                                   directories that should be included on
                                   recursive searches.  An empty value means
@@ -99,6 +104,7 @@ Options:
                                   on all platforms (Windows, too).  Exclusions
                                   are calculated first, inclusions later.
                                   [default: \.pyi?$]
+
   --exclude TEXT                  A regular expression that matches files and
                                   directories that should be excluded on
                                   recursive searches.  An empty value means no
@@ -106,16 +112,23 @@ Options:
                                   directories on all platforms (Windows, too).
                                   Exclusions are calculated first, inclusions
                                   later.  [default: /(\.eggs|\.git|\.hg|\.mypy
-                                  _cache|\.nox|\.tox|\.venv|_build|buck-
+                                  _cache|\.nox|\.tox|\.venv|\.svn|_build|buck-
                                   out|build|dist)/]
+
+  --force-exclude TEXT            Like --exclude, but files and directories
+                                  matching this regex will be excluded even
+                                  when they are passed explicitly as arguments
+
   -q, --quiet                     Don't emit non-error messages to stderr.
-                                  Errors are still emitted, silence those with
+                                  Errors are still emitted; silence those with
                                   2>/dev/null.
+
   -v, --verbose                   Also emit messages to stderr about files
                                   that were not changed or were ignored due to
                                   --exclude=.
+
   --version                       Show the version and exit.
-  --config PATH                   Read configuration from PATH.
+  --config FILE                   Read configuration from PATH.
   -h, --help                      Show this message and exit.
 ```
 
@@ -126,6 +139,16 @@ _Black_ is a well-behaved Unix-style command-line tool:
   filename;
 - it only outputs messages to users on standard error;
 - exits with code 0 unless an internal error occurred (or `--check` was used).
+
+### Using _Black_ with other tools
+
+While _Black_ enforces formatting that conforms to PEP 8, other tools may raise warnings
+about _Black_'s changes or will overwrite _Black_'s changes. A good example of this is
+[isort](https://pypi.org/p/isort). Since _Black_ is barely configurable, these tools
+should be configured to neither warn about nor overwrite _Black_'s changes.
+
+Actual details on _Black_ compatible configurations for various tools can be found in
+[compatible_configs](https://github.com/psf/black/blob/master/docs/compatible_configs.md).
 
 ### NOTE: This is a beta product
 
@@ -489,6 +512,47 @@ file that are not enforced yet but might be in a future version of the formatter
 - for arguments that default to `None`, use `Optional[]` explicitly;
 - use `float` instead of `Union[int, float]`.
 
+## Pragmatism
+
+Early versions of _Black_ used to be absolutist in some respects. They took after its
+initial author. This was fine at the time as it made the implementation simpler and
+there were not many users anyway. Not many edge cases were reported. As a mature tool,
+_Black_ does make some exceptions to rules it otherwise holds. This section documents
+what those exceptions are and why this is the case.
+
+### The magic trailing comma
+
+_Black_ in general does not take existing formatting into account.
+
+However, there are cases where you put a short collection or function call in your code
+but you anticipate it will grow in the future.
+
+For example:
+
+```py3
+TRANSLATIONS = {
+    "en_us": "English (US)",
+    "pl_pl": "polski",
+}
+```
+
+Early versions of _Black_ used to ruthlessly collapse those into one line (it fits!).
+Now, you can communicate that you don't want that by putting a trailing comma in the
+collection yourself. When you do, _Black_ will know to always explode your collection
+into one item per line.
+
+How do you make it stop? Just delete that trailing comma and _Black_ will collapse your
+collection into one line if it fits.
+
+### r"strings" and R"strings"
+
+_Black_ normalizes string quotes as well as string prefixes, making them lowercase. One
+exception to this rule is r-strings. It turns out that the very popular
+[MagicPython](https://github.com/MagicStack/MagicPython/) syntax highlighter, used by
+default by (among others) GitHub and Visual Studio Code, differentiates between
+r-strings and R-strings. The former are syntax highlighted as regular expressions while
+the latter are treated as true raw strings with no special semantics.
+
 ## pyproject.toml
 
 _Black_ is able to read project-specific default values for its command line options
@@ -580,8 +644,11 @@ file hierarchy.
 
 ### Emacs
 
-Use [proofit404/blacken](https://github.com/proofit404/blacken) or
-[Elpy](https://github.com/jorgenschaefer/elpy).
+Options include the following:
+
+- [purcell/reformatter.el](https://github.com/purcell/reformatter.el)
+- [proofit404/blacken](https://github.com/proofit404/blacken)
+- [Elpy](https://github.com/jorgenschaefer/elpy).
 
 ### PyCharm/IntelliJ IDEA
 
@@ -606,6 +673,9 @@ On Windows:
 $ where black
 %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
 ```
+
+Note that if you are using a virtual environment detected by PyCharm, this is an
+unneeded step. In this case the path to `black` is `$PyInterpreterDirectory$/black`.
 
 3. Open External tools in PyCharm/IntelliJ IDEA
 
@@ -697,7 +767,7 @@ Configuration:
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```
-Plug 'psf/black'
+Plug 'psf/black', { 'branch': 'stable' }
 ```
 
 or with [Vundle](https://github.com/VundleVim/Vundle.vim):
@@ -706,8 +776,15 @@ or with [Vundle](https://github.com/VundleVim/Vundle.vim):
 Plugin 'psf/black'
 ```
 
+and execute the following in a terminal:
+
+```console
+$ cd ~/.vim/bundle/black
+$ git checkout origin/stable -b stable
+```
+
 or you can copy the plugin from
-[plugin/black.vim](https://github.com/psf/black/tree/master/plugin/black.vim).
+[plugin/black.vim](https://github.com/psf/black/blob/stable/plugin/black.vim).
 
 ```
 mkdir -p ~/.vim/pack/python/start/black/plugin
@@ -742,9 +819,58 @@ nnoremap <F9> :Black<CR>
 ```
 
 **How to get Vim with Python 3.6?** On Ubuntu 17.10 Vim comes with Python 3.6 by
-default. On macOS with Homebrew run: `brew install vim --with-python3`. When building
-Vim from source, use: `./configure --enable-python3interp=yes`. There's many guides
-online how to do this.
+default. On macOS with Homebrew run: `brew install vim`. When building Vim from source,
+use: `./configure --enable-python3interp=yes`. There's many guides online how to do
+this.
+
+**I get an import error when using _Black_ from a virtual environment**: If you get an
+error message like this:
+
+```text
+Traceback (most recent call last):
+  File "<string>", line 63, in <module>
+  File "/home/gui/.vim/black/lib/python3.7/site-packages/black.py", line 45, in <module>
+    from typed_ast import ast3, ast27
+  File "/home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/ast3.py", line 40, in <module>
+    from typed_ast import _ast3
+ImportError: /home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/_ast3.cpython-37m-x86_64-linux-gnu.so: undefined symbool: PyExc_KeyboardInterrupt
+```
+
+Then you need to install `typed_ast` and `regex` directly from the source code. The
+error happens because `pip` will download [Python wheels](https://pythonwheels.com/) if
+they are available. Python wheels are a new standard of distributing Python packages and
+packages that have Cython and extensions written in C are already compiled, so the
+installation is much more faster. The problem here is that somehow the Python
+environment inside Vim does not match with those already compiled C extensions and these
+kind of errors are the result. Luckily there is an easy fix: installing the packages
+from the source code.
+
+The two packages that cause the problem are:
+
+- [regex](https://pypi.org/project/regex/)
+- [typed-ast](https://pypi.org/project/typed-ast/)
+
+Now remove those two packages:
+
+```console
+$ pip uninstall regex typed-ast -y
+```
+
+And now you can install them with:
+
+```console
+$ pip install --no-binary :all: regex typed-ast
+```
+
+The C extensions will be compiled and now Vim's Python environment will match. Note that
+you need to have the GCC compiler and the Python development files installed (on
+Ubuntu/Debian do `sudo apt-get install build-essential python3-dev`).
+
+If you later want to update _Black_, you should do it like this:
+
+```console
+$ pip install -U black --no-binary regex,typed-ast
+```
 
 ### Visual Studio Code
 
@@ -900,7 +1026,9 @@ Then run `pre-commit install` and you're ready to go.
 
 Avoid using `args` in the hook. Instead, store necessary configuration in
 `pyproject.toml` so that editors and command-line usage of Black all behave consistently
-for your project. See _Black_'s own [pyproject.toml](/pyproject.toml) for an example.
+for your project. See _Black_'s own
+[pyproject.toml](https://github.com/psf/black/blob/master/pyproject.toml) for an
+example.
 
 If you're already using Python 3.7, switch the `language_version` accordingly. Finally,
 `stable` is a tag that is pinned to the latest release on PyPI. If you'd rather run on
@@ -934,6 +1062,8 @@ The following notable open-source projects trust _Black_ with enforcing a consis
 code style: pytest, tox, Pyramid, Django Channels, Hypothesis, attrs, SQLAlchemy,
 Poetry, PyPA applications (Warehouse, Pipenv, virtualenv), pandas, Pillow, every Datadog
 Agent Integration, Home Assistant.
+
+The following organizations use _Black_: Dropbox.
 
 Are we missing anyone? Let us know.
 
@@ -992,452 +1122,14 @@ other hand, if your answer is "because I don't like a particular formatting" the
 not ready to embrace _Black_ yet. Such changes are unlikely to get accepted. You can
 still try but prepare to be disappointed.
 
-More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
+More details can be found in
+[CONTRIBUTING](https://github.com/psf/black/blob/master/CONTRIBUTING.md).
 
 ## Change Log
 
-### 19.10b0
+The log's become rather long. It moved to its own file.
 
-- added support for PEP 572 assignment expressions (#711)
-
-- added support for PEP 570 positional-only arguments (#943)
-
-- added support for async generators (#593)
-
-- added support for pre-splitting collections by putting an explicit trailing comma
-  inside (#826)
-
-- added `black -c` as a way to format code passed from the command line (#761)
-
-- --safe now works with Python 2 code (#840)
-
-- fixed grammar selection for Python 2-specific code (#765)
-
-- fixed feature detection for trailing commas in function definitions and call sites
-  (#763)
-
-- `# fmt: off`/`# fmt: on` comment pairs placed multiple times within the same block of
-  code now behave correctly (#1005)
-
-- _Black_ no longer crashes on Windows machines with more than 61 cores (#838)
-
-- _Black_ no longer crashes on standalone comments prepended with a backslash (#767)
-
-- _Black_ no longer crashes on `from` ... `import` blocks with comments (#829)
-
-- _Black_ no longer crashes on Python 3.7 on some platform configurations (#494)
-
-- _Black_ no longer fails on comments in from-imports (#671)
-
-- _Black_ no longer fails when the file starts with a backslash (#922)
-
-- _Black_ no longer merges regular comments with type comments (#1027)
-
-- _Black_ no longer splits long lines that contain type comments (#997)
-
-- removed unnecessary parentheses around `yield` expressions (#834)
-
-- added parentheses around long tuples in unpacking assignments (#832)
-
-- added parentheses around complex powers when they are prefixed by a unary operator
-  (#646)
-
-- fixed bug that led _Black_ format some code with a line length target of 1 (#762)
-
-- _Black_ no longer introduces quotes in f-string subexpressions on string boundaries
-  (#863)
-
-- if _Black_ puts parenthesis around a single expression, it moves comments to the
-  wrapped expression instead of after the brackets (#872)
-
-- `blackd` now returns the version of _Black_ in the response headers (#1013)
-
-- `blackd` can now output the diff of formats on source code when the `X-Diff` header is
-  provided (#969)
-
-### 19.3b0
-
-- new option `--target-version` to control which Python versions _Black_-formatted code
-  should target (#618)
-
-- deprecated `--py36` (use `--target-version=py36` instead) (#724)
-
-- _Black_ no longer normalizes numeric literals to include `_` separators (#696)
-
-- long `del` statements are now split into multiple lines (#698)
-
-- type comments are no longer mangled in function signatures
-
-- improved performance of formatting deeply nested data structures (#509)
-
-- _Black_ now properly formats multiple files in parallel on Windows (#632)
-
-- _Black_ now creates cache files atomically which allows it to be used in parallel
-  pipelines (like `xargs -P8`) (#673)
-
-- _Black_ now correctly indents comments in files that were previously formatted with
-  tabs (#262)
-
-- `blackd` now supports CORS (#622)
-
-### 18.9b0
-
-- numeric literals are now formatted by _Black_ (#452, #461, #464, #469):
-
-  - numeric literals are normalized to include `_` separators on Python 3.6+ code
-
-  - added `--skip-numeric-underscore-normalization` to disable the above behavior and
-    leave numeric underscores as they were in the input
-
-  - code with `_` in numeric literals is recognized as Python 3.6+
-
-  - most letters in numeric literals are lowercased (e.g., in `1e10`, `0x01`)
-
-  - hexadecimal digits are always uppercased (e.g. `0xBADC0DE`)
-
-- added `blackd`, see [its documentation](#blackd) for more info (#349)
-
-- adjacent string literals are now correctly split into multiple lines (#463)
-
-- trailing comma is now added to single imports that don't fit on a line (#250)
-
-- cache is now populated when `--check` is successful for a file which speeds up
-  consecutive checks of properly formatted unmodified files (#448)
-
-- whitespace at the beginning of the file is now removed (#399)
-
-- fixed mangling [pweave](http://mpastell.com/pweave/) and
-  [Spyder IDE](https://pythonhosted.org/spyder/) special comments (#532)
-
-- fixed unstable formatting when unpacking big tuples (#267)
-
-- fixed parsing of `__future__` imports with renames (#389)
-
-- fixed scope of `# fmt: off` when directly preceding `yield` and other nodes (#385)
-
-- fixed formatting of lambda expressions with default arguments (#468)
-
-- fixed `async for` statements: _Black_ no longer breaks them into separate lines (#372)
-
-- note: the Vim plugin stopped registering `,=` as a default chord as it turned out to
-  be a bad idea (#415)
-
-### 18.6b4
-
-- hotfix: don't freeze when multiple comments directly precede `# fmt: off` (#371)
-
-### 18.6b3
-
-- typing stub files (`.pyi`) now have blank lines added after constants (#340)
-
-- `# fmt: off` and `# fmt: on` are now much more dependable:
-
-  - they now work also within bracket pairs (#329)
-
-  - they now correctly work across function/class boundaries (#335)
-
-  - they now work when an indentation block starts with empty lines or misaligned
-    comments (#334)
-
-- made Click not fail on invalid environments; note that Click is right but the
-  likelihood we'll need to access non-ASCII file paths when dealing with Python source
-  code is low (#277)
-
-- fixed improper formatting of f-strings with quotes inside interpolated expressions
-  (#322)
-
-- fixed unnecessary slowdown when long list literals where found in a file
-
-- fixed unnecessary slowdown on AST nodes with very many siblings
-
-- fixed cannibalizing backslashes during string normalization
-
-- fixed a crash due to symbolic links pointing outside of the project directory (#338)
-
-### 18.6b2
-
-- added `--config` (#65)
-
-- added `-h` equivalent to `--help` (#316)
-
-- fixed improper unmodified file caching when `-S` was used
-
-- fixed extra space in string unpacking (#305)
-
-- fixed formatting of empty triple quoted strings (#313)
-
-- fixed unnecessary slowdown in comment placement calculation on lines without comments
-
-### 18.6b1
-
-- hotfix: don't output human-facing information on stdout (#299)
-
-- hotfix: don't output cake emoji on non-zero return code (#300)
-
-### 18.6b0
-
-- added `--include` and `--exclude` (#270)
-
-- added `--skip-string-normalization` (#118)
-
-- added `--verbose` (#283)
-
-- the header output in `--diff` now actually conforms to the unified diff spec
-
-- fixed long trivial assignments being wrapped in unnecessary parentheses (#273)
-
-- fixed unnecessary parentheses when a line contained multiline strings (#232)
-
-- fixed stdin handling not working correctly if an old version of Click was used (#276)
-
-- _Black_ now preserves line endings when formatting a file in place (#258)
-
-### 18.5b1
-
-- added `--pyi` (#249)
-
-- added `--py36` (#249)
-
-- Python grammar pickle caches are stored with the formatting caches, making _Black_
-  work in environments where site-packages is not user-writable (#192)
-
-- _Black_ now enforces a PEP 257 empty line after a class-level docstring (and/or
-  fields) and the first method
-
-- fixed invalid code produced when standalone comments were present in a trailer that
-  was omitted from line splitting on a large expression (#237)
-
-- fixed optional parentheses being removed within `# fmt: off` sections (#224)
-
-- fixed invalid code produced when stars in very long imports were incorrectly wrapped
-  in optional parentheses (#234)
-
-- fixed unstable formatting when inline comments were moved around in a trailer that was
-  omitted from line splitting on a large expression (#238)
-
-- fixed extra empty line between a class declaration and the first method if no class
-  docstring or fields are present (#219)
-
-- fixed extra empty line between a function signature and an inner function or inner
-  class (#196)
-
-### 18.5b0
-
-- call chains are now formatted according to the
-  [fluent interfaces](https://en.wikipedia.org/wiki/Fluent_interface) style (#67)
-
-- data structure literals (tuples, lists, dictionaries, and sets) are now also always
-  exploded like imports when they don't fit in a single line (#152)
-
-- slices are now formatted according to PEP 8 (#178)
-
-- parentheses are now also managed automatically on the right-hand side of assignments
-  and return statements (#140)
-
-- math operators now use their respective priorities for delimiting multiline
-  expressions (#148)
-
-- optional parentheses are now omitted on expressions that start or end with a bracket
-  and only contain a single operator (#177)
-
-- empty parentheses in a class definition are now removed (#145, #180)
-
-- string prefixes are now standardized to lowercase and `u` is removed on Python 3.6+
-  only code and Python 2.7+ code with the `unicode_literals` future import (#188, #198,
-  #199)
-
-- typing stub files (`.pyi`) are now formatted in a style that is consistent with PEP
-  484 (#207, #210)
-
-- progress when reformatting many files is now reported incrementally
-
-- fixed trailers (content with brackets) being unnecessarily exploded into their own
-  lines after a dedented closing bracket (#119)
-
-- fixed an invalid trailing comma sometimes left in imports (#185)
-
-- fixed non-deterministic formatting when multiple pairs of removable parentheses were
-  used (#183)
-
-- fixed multiline strings being unnecessarily wrapped in optional parentheses in long
-  assignments (#215)
-
-- fixed not splitting long from-imports with only a single name
-
-- fixed Python 3.6+ file discovery by also looking at function calls with unpacking.
-  This fixed non-deterministic formatting if trailing commas where used both in function
-  signatures with stars and function calls with stars but the former would be
-  reformatted to a single line.
-
-- fixed crash on dealing with optional parentheses (#193)
-
-- fixed "is", "is not", "in", and "not in" not considered operators for splitting
-  purposes
-
-- fixed crash when dead symlinks where encountered
-
-### 18.4a4
-
-- don't populate the cache on `--check` (#175)
-
-### 18.4a3
-
-- added a "cache"; files already reformatted that haven't changed on disk won't be
-  reformatted again (#109)
-
-- `--check` and `--diff` are no longer mutually exclusive (#149)
-
-- generalized star expression handling, including double stars; this fixes
-  multiplication making expressions "unsafe" for trailing commas (#132)
-
-- _Black_ no longer enforces putting empty lines behind control flow statements (#90)
-
-- _Black_ now splits imports like "Mode 3 + trailing comma" of isort (#127)
-
-- fixed comment indentation when a standalone comment closes a block (#16, #32)
-
-- fixed standalone comments receiving extra empty lines if immediately preceding a
-  class, def, or decorator (#56, #154)
-
-- fixed `--diff` not showing entire path (#130)
-
-- fixed parsing of complex expressions after star and double stars in function calls
-  (#2)
-
-- fixed invalid splitting on comma in lambda arguments (#133)
-
-- fixed missing splits of ternary expressions (#141)
-
-### 18.4a2
-
-- fixed parsing of unaligned standalone comments (#99, #112)
-
-- fixed placement of dictionary unpacking inside dictionary literals (#111)
-
-- Vim plugin now works on Windows, too
-
-- fixed unstable formatting when encountering unnecessarily escaped quotes in a string
-  (#120)
-
-### 18.4a1
-
-- added `--quiet` (#78)
-
-- added automatic parentheses management (#4)
-
-- added [pre-commit](https://pre-commit.com) integration (#103, #104)
-
-- fixed reporting on `--check` with multiple files (#101, #102)
-
-- fixed removing backslash escapes from raw strings (#100, #105)
-
-### 18.4a0
-
-- added `--diff` (#87)
-
-- add line breaks before all delimiters, except in cases like commas, to better comply
-  with PEP 8 (#73)
-
-- standardize string literals to use double quotes (almost) everywhere (#75)
-
-- fixed handling of standalone comments within nested bracketed expressions; _Black_
-  will no longer produce super long lines or put all standalone comments at the end of
-  the expression (#22)
-
-- fixed 18.3a4 regression: don't crash and burn on empty lines with trailing whitespace
-  (#80)
-
-- fixed 18.3a4 regression: `# yapf: disable` usage as trailing comment would cause
-  _Black_ to not emit the rest of the file (#95)
-
-- when CTRL+C is pressed while formatting many files, _Black_ no longer freaks out with
-  a flurry of asyncio-related exceptions
-
-- only allow up to two empty lines on module level and only single empty lines within
-  functions (#74)
-
-### 18.3a4
-
-- `# fmt: off` and `# fmt: on` are implemented (#5)
-
-- automatic detection of deprecated Python 2 forms of print statements and exec
-  statements in the formatted file (#49)
-
-- use proper spaces for complex expressions in default values of typed function
-  arguments (#60)
-
-- only return exit code 1 when --check is used (#50)
-
-- don't remove single trailing commas from square bracket indexing (#59)
-
-- don't omit whitespace if the previous factor leaf wasn't a math operator (#55)
-
-- omit extra space in kwarg unpacking if it's the first argument (#46)
-
-- omit extra space in
-  [Sphinx auto-attribute comments](http://www.sphinx-doc.org/en/stable/ext/autodoc.html#directive-autoattribute)
-  (#68)
-
-### 18.3a3
-
-- don't remove single empty lines outside of bracketed expressions (#19)
-
-- added ability to pipe formatting from stdin to stdin (#25)
-
-- restored ability to format code with legacy usage of `async` as a name (#20, #42)
-
-- even better handling of numpy-style array indexing (#33, again)
-
-### 18.3a2
-
-- changed positioning of binary operators to occur at beginning of lines instead of at
-  the end, following
-  [a recent change to PEP 8](https://github.com/python/peps/commit/c59c4376ad233a62ca4b3a6060c81368bd21e85b)
-  (#21)
-
-- ignore empty bracket pairs while splitting. This avoids very weirdly looking
-  formattings (#34, #35)
-
-- remove a trailing comma if there is a single argument to a call
-
-- if top level functions were separated by a comment, don't put four empty lines after
-  the upper function
-
-- fixed unstable formatting of newlines with imports
-
-- fixed unintentional folding of post scriptum standalone comments into last statement
-  if it was a simple statement (#18, #28)
-
-- fixed missing space in numpy-style array indexing (#33)
-
-- fixed spurious space after star-based unary expressions (#31)
-
-### 18.3a1
-
-- added `--check`
-
-- only put trailing commas in function signatures and calls if it's safe to do so. If
-  the file is Python 3.6+ it's always safe, otherwise only safe if there are no `*args`
-  or `**kwargs` used in the signature or call. (#8)
-
-- fixed invalid spacing of dots in relative imports (#6, #13)
-
-- fixed invalid splitting after comma on unpacked variables in for-loops (#23)
-
-- fixed spurious space in parenthesized set expressions (#7)
-
-- fixed spurious space after opening parentheses and in default arguments (#14, #17)
-
-- fixed spurious space after unary operators when the operand was a complex expression
-  (#15)
-
-### 18.3a0
-
-- first published version, Happy 🍰 Day 2018!
-
-- alpha quality
-
-- date-versioned (see: https://calver.org/)
+See [CHANGES](https://github.com/psf/black/blob/master/CHANGES.md).
 
 ## Authors
 
@@ -1446,12 +1138,13 @@ Glued together by [Łukasz Langa](mailto:lukasz@langa.pl).
 Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com),
 [Carl Meyer](mailto:carl@oddbird.net),
 [Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com),
-[Mika Naylor](mailto:mail@autophagy.io), and
-[Zsolt Dollenstein](mailto:zsol.zsol@gmail.com).
+[Mika Naylor](mailto:mail@autophagy.io),
+[Zsolt Dollenstein](mailto:zsol.zsol@gmail.com), and
+[Cooper Lees](mailto:me@cooperlees.com).
 
 Multiple contributions by:
 
-- [Abdur-Rahmaan Janhangeer](mailto:cryptolabour@gmail.com)
+- [Abdur-Rahmaan Janhangeer](mailto:arj.python@gmail.com)
 - [Adam Johnson](mailto:me@adamj.eu)
 - [Alexander Huynh](mailto:github@grande.coffee)
 - [Andrew Thorp](mailto:andrew.thorp.dev@gmail.com)
@@ -1468,6 +1161,7 @@ Multiple contributions by:
 - Charles Reid
 - [Christian Heimes](mailto:christian@python.org)
 - [Chuck Wooters](mailto:chuck.wooters@microsoft.com)
+- [Cooper Ry Lees](mailto:me@cooperlees.com)
 - [Daniel Hahler](mailto:github@thequod.de)
 - [Daniel M. Capella](mailto:polycitizen@gmail.com)
 - Daniele Esposti

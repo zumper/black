@@ -33,14 +33,14 @@ exclude = '''
 # Build system information below.
 # NOTE: You don't need this in your own Black configuration.
 
-[tool.poetry-dynamic-versioning]
-enable = true
-pattern = "(?P<base>\\d\\d\\.\\d\\d?)(?P<stage>[a-zA-Z])(?P<revision>\\d+)"
-dirty = true
-
-[tool.poetry-dynamic-versioning.substitution]
-files = ["*/_black_version.py"]
-patterns = ["(^version\\s*=\\s*\")[^\"]*\"$"]
+# [tool.poetry-dynamic-versioning]
+# enable = true
+# pattern = "(?P<base>\\d\\d\\.\\d\\d?)(?P<stage>[a-zA-Z])(?P<revision>\\d+)"
+# dirty = true
+# 
+# [tool.poetry-dynamic-versioning.substitution]
+# files = ["*/_black_version.py"]
+# patterns = ["(^version\\s*=\\s*\")[^\"]*\"$"]
 
 [tool.poetry]
 name = "black"
@@ -76,22 +76,21 @@ keywords = [
   "rustfmt",
 ]
 packages = [
-  {include = "black.py"},
-  {include = "blackd.py"},
-  {include = "blib2to3"},
-  {include = "tests", format="sdist"},
-  {include = "profiling", format="sdist"},
-  {include = "plugin", format="sdist"},
-  {include = "docs", format="sdist"},
-  {include = ".flake8", format="sdist"},
-  {include = "mypy.ini", format="sdist"},
-  {include = "poetry.lock", format="sdist"},
-  {include = ".pre-commit-config.yaml", format="sdist"},
-  {include = ".pre-commit-hooks.yaml", format="sdist"},
-  {include = "CONTRIBUTING.md", format="sdist"},
+  {include = "black", from = "src"},
+  {include = "blackd", from = "src"},
+  {include = "blib2to3", from = "src"},
 ]
 include = [
-  "_black_version.py"
+  "_black_version.py",
+  "docs",
+  "plugin",
+  "profiling",
+  ".flake8",
+  "mypy.ini",
+  "poetry.lock",
+  ".pre-commit-config.yaml",
+  ".pre-commit-hooks.yaml",
+  "CONTRIBUTING.md",
 ]
 # Uncomment this to build with mypyc
 # build = "build.py"
@@ -138,5 +137,5 @@ pytest = "^5.3.2"
 pytest-cov = "^2.8.1"
 
 [build-system]
-requires = ["poetry>=1.0", "poetry-dynamic-versioning>=0.4"]
+requires = ["poetry>=1.0"]
 build-backend = "poetry.masonry.api"
