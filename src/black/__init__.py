@@ -64,7 +64,7 @@ from _black_version import version as __version__
 if TYPE_CHECKING:
     import colorama  # noqa: F401
 
-DEFAULT_LINE_LENGTH = 88
+DEFAULT_LINE_LENGTH = 100
 DEFAULT_EXCLUDES = r"/(\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
@@ -1722,7 +1722,7 @@ class Line:
         if not self:
             return "\n"
 
-        indent = "    " * self.depth
+        indent = "  " * self.depth
         leaves = iter(self.leaves)
         first = next(leaves)
         res = f"{first.prefix}{indent}{first.value}"
@@ -2035,7 +2035,7 @@ class LineGenerator(Visitor[Line]):
         if prev_siblings_are(
             leaf.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
         ) and is_multiline_string(leaf):
-            prefix = "    " * self.current_line.depth
+            prefix = "  " * self.current_line.depth
             docstring = fix_docstring(leaf.value[3:-3], prefix)
             leaf.value = leaf.value[0:3] + docstring + leaf.value[-3:]
             normalize_string_quotes(leaf)
@@ -4820,7 +4820,7 @@ def bracket_split_build_line(
     result = Line(depth=original.depth)
     if is_body:
         result.inside_brackets = True
-        result.depth += 1
+        result.depth += 2
         if leaves:
             # Since body is a new indent level, remove spurious leading whitespace.
             normalize_prefix(leaves[0], inside_brackets=True)
@@ -5028,7 +5028,7 @@ def normalize_string_prefix(leaf: Leaf, remove_u_prefix: bool = False) -> None:
 
 
 def normalize_string_quotes(leaf: Leaf) -> None:
-    """Prefer double quotes but only if it doesn't cause more escaping.
+    """Prefer single quotes but only if it doesn't cause more escaping.
 
     Adds or removes backslashes as appropriate. Doesn't parse and fix
     strings nested in f-strings (yet).
@@ -5097,8 +5097,8 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     if new_escape_count > orig_escape_count:
         return  # Do not introduce more escaping
 
-    if new_escape_count == orig_escape_count and orig_quote == '"':
-        return  # Prefer double quotes
+    if new_escape_count == orig_escape_count and orig_quote == "'":
+        return  # Prefer single quotes
 
     leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
 
