@@ -240,7 +240,7 @@ class LineGenerator(Visitor[Line]):
             docstring_started_empty = not docstring
 
             if is_multiline_string(leaf):
-                indent = " " * 4 * self.current_line.depth
+                indent = " " * 2 * self.current_line.depth
                 docstring = fix_docstring(docstring, indent)
             else:
                 docstring = docstring.strip()
@@ -564,7 +564,7 @@ def bracket_split_build_line(
     result = Line(mode=original.mode, depth=original.depth)
     if is_body:
         result.inside_brackets = True
-        result.depth += 1
+        result.depth += 2
         if leaves:
             # Since body is a new indent level, remove spurious leading whitespace.
             normalize_prefix(leaves[0], inside_brackets=True)

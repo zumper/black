@@ -143,7 +143,7 @@ def normalize_string_prefix(s: str, remove_u_prefix: bool = False) -> str:
 
 
 def normalize_string_quotes(s: str) -> str:
-    """Prefer double quotes but only if it doesn't cause more escaping.
+    """Prefer single quotes but only if it doesn't cause more escaping.
 
     Adds or removes backslashes as appropriate. Doesn't parse and fix
     strings nested in f-strings.
@@ -210,7 +210,7 @@ def normalize_string_quotes(s: str) -> str:
     if new_escape_count > orig_escape_count:
         return s  # Do not introduce more escaping
 
-    if new_escape_count == orig_escape_count and orig_quote == '"':
-        return s  # Prefer double quotes
+    if new_escape_count == orig_escape_count and orig_quote == "'":
+        return s  # Prefer single quotes
 
     return f"{prefix}{new_quote}{new_body}{new_quote}"
