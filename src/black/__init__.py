@@ -1628,8 +1628,23 @@ class Line:
     def maybe_should_explode(self, closing: Leaf) -> bool:
         """Return True if this line should explode (always be split), that is when:
         - there's a trailing comma here; and
+        - a function call or definition with multiple arguments
+        - there's a pre-existing trailing comma here; and
         - it's not a one-tuple.
         """
+        ARGS = {
+            syms.arglist,
+            syms.argument,  # double star in arglist
+            syms.typedargslist,
+            syms.varargslist,  # lambdas
+        }
+        if closing.parent and len(list(closing.parent.leaves())) < len(self.leaves):
+            parent = closing.parent.parent
+        else:
+            parent = closing.parent
+        if parent and parent.type in ARGS and parent.children:
+            if list(parent.leaves()) == (self.leaves + [closing]):
+                return True
         if not (
             closing.type in CLOSING_BRACKETS
             and self.leaves
