@@ -940,6 +940,61 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     return dst_contents
 
 
+FMT_ON_STR = '# fmt: on'
+FMT_OFF_STR = '# fmt: off'
+CUSTOM_REPLACE = '# black-replace'
+
+LOGGING_RE = re.compile(
+    '^(?!#)( *)logging\.(debug|info|warn|warning|error|exception)\(', re.MULTILINE
+)
+
+REMOVE_CUSTOM_FORMAT_OFF_RE = re.compile(f" *{FMT_OFF_STR}\n *{CUSTOM_REPLACE}\n", re.MULTILINE)
+REMOVE_CUSTOM_FORMAT_ON_RE = re.compile(f" *{CUSTOM_REPLACE}\n *{FMT_ON_STR}\n", re.MULTILINE)
+
+
+def comment_logs(content: str):
+    """Adds comments around logging code so black doesn't autoformat. Adds
+
+    # fmt: off
+    # black-replace
+    logging...
+    # fmt: on
+    # black-replace
+    """
+    running_string = ''
+    prev_pos = 0
+    for match in re.finditer(LOGGING_RE, content):
+        spaces = match.group(1)
+        running_string += content[prev_pos: match.start()]
+        running_string += f'{spaces}{FMT_OFF_STR}\n{spaces}{CUSTOM_REPLACE}\n'
+        running_string += match.group(0)
+        end = match.end()
+        offset = find_closing_paren_offset(content[end:])
+        running_string += content[end:end + offset]
+        running_string += f'\n{spaces}{CUSTOM_REPLACE}\n{spaces}{FMT_ON_STR}'
+        prev_pos = end + offset
+    return running_string + content[prev_pos:]
+
+
+def find_closing_paren_offset(content):
+    """Finds the position of the closing paren in content starting from beginning of string"""
+    pos = 0
+    current_open_parens = 1
+    while current_open_parens:
+        if content[pos] == ')':
+            current_open_parens -= 1
+        elif content[pos] == '(':
+            current_open_parens += 1
+        pos += 1
+    return pos
+
+
+def uncomment_logs(content):
+    """Removes comments around logging statements"""
+    content = REMOVE_CUSTOM_FORMAT_OFF_RE.sub("", content)
+    return REMOVE_CUSTOM_FORMAT_ON_RE.sub("", content)
+
+
 def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     """Reformat a string and return new contents.
 
@@ -970,7 +1025,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         hey
 
     """
-    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
+    src_node = lib2to3_parse(comment_logs(src_contents).lstrip(), mode.target_versions)
     dst_contents = []
     future_imports = get_future_imports(src_node)
     if mode.target_versions:
@@ -1000,7 +1055,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
             current_line, mode=mode, features=split_line_features
         ):
             dst_contents.append(str(line))
-    return "".join(dst_contents)
+    return uncomment_logs("".join(dst_contents))
 
 
 def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
@@ -1583,6 +1638,13 @@ class Line:
 
         return False
 
+    def should_never_split_line(self):
+        """The line will never be split if this function returns true"""
+        if self.is_import:
+            return True
+
+        return False
+
     def contains_unsplittable_type_ignore(self) -> bool:
         if not self.leaves:
             return False
@@ -1621,9 +1683,31 @@ class Line:
 
     def maybe_should_explode(self, closing: Leaf) -> bool:
         """Return True if this line should explode (always be split), that is when:
+        - a function call or definition with multiple arguments;
         - there's a pre-existing trailing comma here; and
         - it's not a one-tuple.
         """
+        # trying to find the node containing all the args of a function
+        parent = closing.parent
+        while parent and len(list(parent.leaves())) < len(self.leaves):
+            parent = parent.parent
+
+        # Check the parent is a argument type list, starts with a paren (so function rather than
+        # collection), and that the parent's leaves match the current line
+        if (
+            parent
+            and parent.type in VARARGS_PARENTS
+            and parent.prev_sibling
+            and parent.prev_sibling.type == token.LPAR
+            and parent.next_sibling
+            and parent.next_sibling.type == token.RPAR
+            and list(parent.leaves()) == (self.leaves + [closing])
+            and isinstance(parent.next_sibling, Leaf)
+        ):
+            if any(leaf.type == token.COMMA and leaf.bracket_depth == closing.bracket_depth
+                   for leaf in self.leaves):
+                return True
+
         if not (
             closing.type in CLOSING_BRACKETS
             and self.leaves
@@ -1636,7 +1720,7 @@ class Line:
             return True
 
         if self.is_import:
-            return True
+            return False
 
         if not is_one_tuple_between(closing.opening_bracket, closing, self.leaves):
             return True
@@ -2614,6 +2698,7 @@ def transform_line(
         and (
             is_line_short_enough(line, line_length=mode.line_length, line_str=line_str)
             or line.contains_unsplittable_type_ignore()
+            or line.should_never_split_line()
         )
         and not (line.inside_brackets and line.contains_standalone_comments())
     ):
@@ -4820,7 +4905,7 @@ def bracket_split_build_line(
     result = Line(depth=original.depth)
     if is_body:
         result.inside_brackets = True
-        result.depth += 2
+        result.depth += 1
         if leaves:
             # Since body is a new indent level, remove spurious leading whitespace.
             normalize_prefix(leaves[0], inside_brackets=True)
