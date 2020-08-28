@@ -1632,19 +1632,21 @@ class Line:
         - there's a pre-existing trailing comma here; and
         - it's not a one-tuple.
         """
-        ARGS = {
-            syms.arglist,
-            syms.argument,  # double star in arglist
-            syms.typedargslist,
-            syms.varargslist,  # lambdas
-        }
-        if closing.parent and len(list(closing.parent.leaves())) < len(self.leaves):
-            parent = closing.parent.parent
-        else:
-            parent = closing.parent
-        if parent and parent.type in ARGS and parent.children:
-            if list(parent.leaves()) == (self.leaves + [closing]):
-                return True
+        # trying to find the node containing all the args of a function
+        parent = closing.parent
+        while parent and len(list(parent.leaves())) < len(self.leaves):
+            parent = parent.parent
+
+        # Check the parent is a argument type list, starts with a paren (so function rather than
+        # collection), and that the parent's leaves match the current line
+        if (parent
+            and parent.type in VARARGS_PARENTS
+            and parent.prev_sibling
+            and parent.prev_sibling.type == token.LPAR
+            and list(parent.leaves()) == (self.leaves + [closing])
+        ):
+            return True
+
         if not (
             closing.type in CLOSING_BRACKETS
             and self.leaves
