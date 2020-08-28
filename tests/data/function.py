@@ -16,16 +16,6 @@ def func_no_args():
     continue
   exec("new-style exec", {}, {})
   return None
-async def coroutine(arg, exec=False):
- "Single-line docstring. Multiline is harder to reformat."
- async with some_connection() as conn:
-     await conn.do_what_i_mean('SELECT bobby, tables FROM xkcd', timeout=2)
- await asyncio.sleep(1)
-@asyncio.coroutine
-@some_decorator(
-with_args=True,
-many_args=[1,2,3]
-)
 def function_signature_stress_test(number:int,no_annotation=None,text:str="default",* ,debug:bool=False,**kwargs) -> str:
  return text[number:-1]
 def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r''):
@@ -139,6 +129,28 @@ something = [
   'abc'
 ]
 
+something_else = ['abc',]
+
+expected_ptypes = itertools.chain.from_iterable(
+  x[1]
+  for x in api.PROPERTY_CATEGORIES.iteritems()
+  if x[0] in site_pcats
+)
+
+FORMFIELD_OVERRIDES = {
+    model_utils.ArrayField: {
+        'widget': admin_widgets.AdminTextInputWidget(
+            attrs={'cols': 240, 'class': 'vLargeTextField',}
+        )
+    },
+}
+
+something = (1, )
+
+tuple_with_stuff = (1,2,3,)
+
+some = function('hello', 'world')
+
 # output
 
 
@@ -166,27 +178,6 @@ def func_no_args():
     continue
   exec('new-style exec', {}, {})
   return None
-
-
-async def coroutine(arg, exec=False):
-  'Single-line docstring. Multiline is harder to reformat.'
-  async with some_connection() as conn:
-    await conn.do_what_i_mean('SELECT bobby, tables FROM xkcd', timeout=2)
-  await asyncio.sleep(1)
-
-
-@asyncio.coroutine
-@some_decorator(with_args=True, many_args=[1, 2, 3])
-def function_signature_stress_test(
-    number: int,
-    no_annotation=None,
-    text: str = 'default',
-    *,
-    debug: bool = False,
-    **kwargs,
-) -> str:
-  return text[number:-1]
-
 
 def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h='', i=r''):
   offset = attr.ib(default=attr.Factory(lambda: _r.uniform(10000, 200000)))
@@ -336,3 +327,32 @@ building_high_vol = self.add_building(
 )
 
 something = ['abc']
+
+something_else = [
+    'abc',
+]
+
+expected_ptypes = itertools.chain.from_iterable(
+    x[1] for x in api.PROPERTY_CATEGORIES.iteritems() if x[0] in site_pcats
+)
+
+FORMFIELD_OVERRIDES = {
+    model_utils.ArrayField: {
+        'widget': admin_widgets.AdminTextInputWidget(
+            attrs={
+                'cols': 240,
+                'class': 'vLargeTextField',
+            }
+        )
+    },
+}
+
+something = (1,)
+
+tuple_with_stuff = (
+    1,
+    2,
+    3,
+)
+
+some = function('hello', 'world')

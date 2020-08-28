@@ -1644,8 +1644,15 @@ class Line:
             and parent.prev_sibling
             and parent.prev_sibling.type == token.LPAR
             and list(parent.leaves()) == (self.leaves + [closing])
+            and isinstance(parent.next_sibling, Leaf)
         ):
-            return True
+            closing = parent.next_sibling.clone()
+            closing.bracket_depth = parent.next_sibling.bracket_depth - 1
+            return not is_one_tuple_between(
+                parent.prev_sibling,
+                closing,
+                list(parent.parent.leaves())
+            )
 
         if not (
             closing.type in CLOSING_BRACKETS
