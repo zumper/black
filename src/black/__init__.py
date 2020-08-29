@@ -1643,9 +1643,12 @@ class Line:
             and parent.type in VARARGS_PARENTS
             and parent.prev_sibling
             and parent.prev_sibling.type == token.LPAR
+            and parent.next_sibling
+            and parent.next_sibling.type == token.RPAR
             and list(parent.leaves()) == (self.leaves + [closing])
             and isinstance(parent.next_sibling, Leaf)
         ):
+            # need to set the bracket depth down a level. Not sure why.
             closing = parent.next_sibling.clone()
             closing.bracket_depth = parent.next_sibling.bracket_depth - 1
             return self.leaves[-1].type == token.COMMA or not is_one_tuple_between(

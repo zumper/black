@@ -151,6 +151,8 @@ tuple_with_stuff = (1,2,3,)
 
 some = function('hello', 'world')
 
+simple_tuple = ()
+
 # output
 
 
@@ -368,3 +370,5 @@ tuple_with_stuff = (
 )
 
 some = function('hello', 'world')
+
+simple_tuple = ()
