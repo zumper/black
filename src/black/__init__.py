@@ -1648,7 +1648,7 @@ class Line:
         ):
             closing = parent.next_sibling.clone()
             closing.bracket_depth = parent.next_sibling.bracket_depth - 1
-            return not is_one_tuple_between(
+            return self.leaves[-1].type == token.COMMA or not is_one_tuple_between(
                 parent.prev_sibling,
                 closing,
                 list(parent.parent.leaves())

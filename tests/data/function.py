@@ -176,8 +176,20 @@ def func_no_args():
   for i in range(10):
     print(i)
     continue
-  exec('new-style exec', {}, {})
+  exec ('new-style exec', {}, {})
   return None
+
+
+def function_signature_stress_test(
+    number: int,
+    no_annotation=None,
+    text: str = 'default',
+    *,
+    debug: bool = False,
+    **kwargs
+) -> str:
+  return text[number:-1]
+
 
 def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h='', i=r''):
   offset = attr.ib(default=attr.Factory(lambda: _r.uniform(10000, 200000)))
