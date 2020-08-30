@@ -4905,7 +4905,7 @@ def bracket_split_build_line(
     result = Line(depth=original.depth)
     if is_body:
         result.inside_brackets = True
-        result.depth += 2
+        result.depth += 1
         if leaves:
             # Since body is a new indent level, remove spurious leading whitespace.
             normalize_prefix(leaves[0], inside_brackets=True)
