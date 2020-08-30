@@ -954,6 +954,14 @@ REMOVE_CUSTOM_FORMAT_ON_RE = re.compile(f" *{CUSTOM_REPLACE}\n *{FMT_ON_STR}\n",
 
 
 def comment_logs(content: str):
+    """Adds comments around logging code so black doesn't autoformat. Adds
+
+    # fmt: off
+    # black-replace
+    logging...
+    # fmt: on
+    # black-replace
+    """
     running_string = ''
     prev_pos = 0
     for match in re.finditer(LOGGING_RE, content):
@@ -980,6 +988,12 @@ def find_closing_paren_offset(content):
             current_open_parens += 1
         pos += 1
     return pos
+
+
+def uncomment_logs(content):
+    """Removes comments around logging statements"""
+    content = REMOVE_CUSTOM_FORMAT_OFF_RE.sub("", content)
+    return REMOVE_CUSTOM_FORMAT_ON_RE.sub("", content)
 
 
 def format_str(src_contents: str, *, mode: Mode) -> FileContent:
@@ -1042,9 +1056,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
             current_line, mode=mode, features=split_line_features
         ):
             dst_contents.append(str(line))
-    result = "".join(dst_contents)
-    result = REMOVE_CUSTOM_FORMAT_OFF_RE.sub("", result)
-    return REMOVE_CUSTOM_FORMAT_ON_RE.sub("", result)
+    return uncomment_logs("".join(dst_contents))
 
 
 def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
