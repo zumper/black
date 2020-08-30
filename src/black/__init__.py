@@ -941,6 +941,47 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     return dst_contents
 
 
+FMT_ON_STR = '# fmt: on'
+FMT_OFF_STR = '# fmt: off'
+CUSTOM_REPLACE = '# black-replace'
+
+LOGGING_RE = re.compile(
+    '^(?!#)( *)logging\.(debug|info|warn|warning|error|exception)\(', re.MULTILINE
+)
+
+REMOVE_CUSTOM_FORMAT_OFF_RE = re.compile(f" *{FMT_OFF_STR}\n *{CUSTOM_REPLACE}\n", re.MULTILINE)
+REMOVE_CUSTOM_FORMAT_ON_RE = re.compile(f" *{CUSTOM_REPLACE}\n *{FMT_ON_STR}\n", re.MULTILINE)
+
+
+def comment_logs(content: str):
+    running_string = ''
+    prev_pos = 0
+    for match in re.finditer(LOGGING_RE, content):
+        spaces = match.group(1)
+        running_string += content[prev_pos: match.start()]
+        running_string += f'{spaces}{FMT_OFF_STR}\n{spaces}{CUSTOM_REPLACE}\n'
+        running_string += match.group(0)
+        end = match.end()
+        offset = find_closing_paren_offset(content[end:])
+        running_string += content[end:end + offset]
+        running_string += f'\n{spaces}{CUSTOM_REPLACE}\n{spaces}{FMT_ON_STR}'
+        prev_pos = end + offset
+    return running_string + content[prev_pos:]
+
+
+def find_closing_paren_offset(content):
+    """Finds the position of the closing paren in content starting from beginning of string"""
+    pos = 0
+    current_open_parens = 1
+    while current_open_parens:
+        if content[pos] == ')':
+            current_open_parens -= 1
+        elif content[pos] == '(':
+            current_open_parens += 1
+        pos += 1
+    return pos
+
+
 def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     """Reformat a string and return new contents.
 
@@ -971,7 +1012,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         hey
 
     """
-    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
+    src_node = lib2to3_parse(comment_logs(src_contents).lstrip(), mode.target_versions)
     dst_contents = []
     future_imports = get_future_imports(src_node)
     if mode.target_versions:
@@ -1001,7 +1042,9 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
             current_line, mode=mode, features=split_line_features
         ):
             dst_contents.append(str(line))
-    return "".join(dst_contents)
+    result = "".join(dst_contents)
+    result = REMOVE_CUSTOM_FORMAT_OFF_RE.sub("", result)
+    return REMOVE_CUSTOM_FORMAT_ON_RE.sub("", result)
 
 
 def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:

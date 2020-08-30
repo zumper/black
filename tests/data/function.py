@@ -153,8 +153,39 @@ some = function('hello', 'world')
 
 simple_tuple = ()
 
-# output
+a= (1,2,  3)
+if True:
+  logging.info('testing',
+               some,
+                          stuff,          here)
+something_else(a,
+  b)
 
+#   logging.info('commented',
+#                some,
+#                           stuff,          out)
+
+logging.info('something')
+logging.info('something else')
+
+if not self.bundle['user']['verified_on'] and api_user.create_user:
+  for fail_i in range(fail):
+    qs = None
+    try:
+      logging.info('fetching auth questions for failure')
+      qs = self.credit_auth_authenticate(api_user)
+      logging.info(qs)
+    except Exception:
+      logging.exception('failed auth init')
+    logging.info('submitting answers for failure')
+    try:
+      cav = self.credit_auth_verify(api_user, qs.get('auth_session'), [5, 5, 5])
+      logging.info(cav)
+    except Exception:
+      logging.exception('failed auth verify')
+
+
+# output
 
 #!/usr/bin/env python3
 import asyncio
@@ -372,3 +403,33 @@ tuple_with_stuff = (
 some = function('hello', 'world')
 
 simple_tuple = ()
+
+a = (1, 2, 3)
+if True:
+  logging.info('testing',
+               some,
+                          stuff,          here)
+something_else(a, b)
+
+#   logging.info('commented',
+#                some,
+#                           stuff,          out)
+
+logging.info('something')
+logging.info('something else')
+
+if not self.bundle['user']['verified_on'] and api_user.create_user:
+  for fail_i in range(fail):
+    qs = None
+    try:
+      logging.info('fetching auth questions for failure')
+      qs = self.credit_auth_authenticate(api_user)
+      logging.info(qs)
+    except Exception:
+      logging.exception('failed auth init')
+    logging.info('submitting answers for failure')
+    try:
+      cav = self.credit_auth_verify(api_user, qs.get('auth_session'), [5, 5, 5])
+      logging.info(cav)
+    except Exception:
+      logging.exception('failed auth verify')
