@@ -184,6 +184,19 @@ if not self.bundle['user']['verified_on'] and api_user.create_user:
     except Exception:
       logging.exception('failed auth verify')
 
+query = self.session.query(objects.BillingInvoice).filter(
+  objects.BillingInvoice.billing_subscription_id == subscription_id,
+)
+
+test = some_long_function_name(('something12345', 'something12345', 'something12345', 'something12345'))
+
+return collections.OrderedDict(
+  (name, wrap_action(func, request, model_name, name, desc)) for func, name, desc in actions
+)
+
+payment_source = payment_utils.find_payment_source_by_id_hash(
+  payment_sources, payment_source_id_hash
+)
 
 # output
 
@@ -209,7 +222,7 @@ def func_no_args():
   for i in range(10):
     print(i)
     continue
-  exec ('new-style exec', {}, {})
+  exec('new-style exec', {}, {})
   return None
 
 
@@ -433,3 +446,20 @@ if not self.bundle['user']['verified_on'] and api_user.create_user:
       logging.info(cav)
     except Exception:
       logging.exception('failed auth verify')
+
+query = self.session.query(objects.BillingInvoice).filter(
+  objects.BillingInvoice.billing_subscription_id == subscription_id,
+)
+
+test = some_long_function_name(
+  ('something12345', 'something12345', 'something12345', 'something12345')
+)
+
+return collections.OrderedDict(
+  (name, wrap_action(func, request, model_name, name, desc)) for func, name, desc in actions
+)
+
+payment_source = payment_utils.find_payment_source_by_id_hash(
+  payment_sources,
+  payment_source_id_hash,
+)

@@ -1694,7 +1694,8 @@ class Line:
 
         # Check the parent is a argument type list, starts with a paren (so function rather than
         # collection), and that the parent's leaves match the current line
-        if (parent
+        if (
+            parent
             and parent.type in VARARGS_PARENTS
             and parent.prev_sibling
             and parent.prev_sibling.type == token.LPAR
@@ -1703,14 +1704,9 @@ class Line:
             and list(parent.leaves()) == (self.leaves + [closing])
             and isinstance(parent.next_sibling, Leaf)
         ):
-            # need to set the bracket depth down a level. Not sure why.
-            closing = parent.next_sibling.clone()
-            closing.bracket_depth = parent.next_sibling.bracket_depth - 1
-            return self.leaves[-1].type == token.COMMA or not is_one_tuple_between(
-                parent.prev_sibling,
-                closing,
-                list(parent.parent.leaves())
-            )
+            if any(leaf.type == token.COMMA and leaf.bracket_depth == closing.bracket_depth
+                   for leaf in self.leaves):
+                return True
 
         if not (
             closing.type in CLOSING_BRACKETS
