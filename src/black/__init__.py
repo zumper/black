@@ -945,7 +945,7 @@ FMT_OFF_STR = '# fmt: off'
 CUSTOM_REPLACE = '# black-replace'
 
 LOGGING_RE = re.compile(
-    '^(?!#)( *)logging\.(debug|info|warn|warning|error|exception)\(', re.MULTILINE
+    r'^(?!#)( *)(logging|logger)\.(debug|info|warn|warning|error|exception)\(', re.MULTILINE
 )
 
 REMOVE_CUSTOM_FORMAT_OFF_RE = re.compile(f" *{FMT_OFF_STR}\n *{CUSTOM_REPLACE}\n", re.MULTILINE)

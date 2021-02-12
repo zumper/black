@@ -186,6 +186,10 @@ if not self.bundle['user']['verified_on'] and api_user.create_user:
     except Exception:
       logging.exception('failed auth verify')
 
+logger.info('something',
+                'with', 'messed',
+            'up',     'formatting')
+
 query = self.session.query(objects.BillingInvoice).filter(
   objects.BillingInvoice.billing_subscription_id == subscription_id,
 )
@@ -450,6 +454,10 @@ if not self.bundle['user']['verified_on'] and api_user.create_user:
       logging.info(cav)
     except Exception:
       logging.exception('failed auth verify')
+
+logger.info('something',
+                'with', 'messed',
+            'up',     'formatting')
 
 query = self.session.query(objects.BillingInvoice).filter(
   objects.BillingInvoice.billing_subscription_id == subscription_id,
